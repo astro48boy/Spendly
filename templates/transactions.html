@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - Spendly</title>
+    <link rel="stylesheet" href="/static/dashboard_modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-wallet"></i>
+                <span>Spendly</span>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                </a>
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/transactions" class="nav-link active">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Transactions</span>
+                </a>
+            </div>
+            
+            <div class="nav-user" id="userInfo" style="display: none;">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-name" id="userName"></span>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>
+                    <i class="fas fa-users"></i>
+                    Your Groups
+                </h2>
+                <button class="create-group-btn" onclick="window.location.href='/'">
+                    <i class="fas fa-plus"></i>
+                    New Group
+                </button>
+            </div>
+            
+            <div class="groups-container">
+                <div id="groupsList" class="groups-list">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Loading groups...</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Welcome State -->
+            <div id="welcomeState" class="welcome-state">
+                <div class="welcome-content">
+                    <div class="welcome-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h1 class="welcome-title">Transaction History</h1>
+                    <p class="welcome-description">Select a group from the sidebar to view its transaction history and expense details.</p>
+                    <div class="welcome-actions">
+                        <button class="action-btn primary" onclick="window.location.href='/'">
+                            <i class="fas fa-plus"></i>
+                            Add Your First Expense
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Transactions -->
+            <div id="groupTransactions" class="group-details" style="display: none;">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="header-content">
+                        <div class="header-info">
+                            <h1 id="selectedGroupName" class="page-title">
+                                <i class="fas fa-history"></i>
+                                Transaction History
+                            </h1>
+                            <div class="group-meta">
+                                <span class="total-transactions" id="totalTransactions">
+                                    <i class="fas fa-receipt"></i>
+                                    <span id="transactionCount">0 transactions</span>
+                                </span>
+                                <span class="total-amount" id="totalAmount">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    $0.00 total
+                                </span>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="action-btn primary" onclick="window.location.href='/'">
+                                <i class="fas fa-plus"></i>
+                                Add Expense
+                            </button>
+                            <button class="action-btn secondary" onclick="exportTransactions()">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-week"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>This Week</h3>
+                                <div class="stat-value" id="weeklyTotal">$0.00</div>
+                                <div class="stat-label" id="weeklyCount">0 transactions</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>This Month</h3>
+                                <div class="stat-value" id="monthlyTotal">$0.00</div>
+                                <div class="stat-label" id="monthlyCount">0 transactions</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Your Share</h3>
+                                <div class="stat-value" id="userShare">$0.00</div>
+                                <div class="stat-label">Your portion</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="content-sections">
+                    <section class="content-section">
+                        <div class="section-header">
+                            <h2>
+                                <i class="fas fa-filter"></i>
+                                Filter & Search
+                            </h2>
+                        </div>
+                        
+                        <div class="filters-row">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="searchInput" placeholder="Search transactions..." />
+                            </div>
+                            
+                            <div class="filter-controls">
+                                <select id="categoryFilter" class="filter-select">
+                                    <option value="">All Categories</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Transportation">Transportation</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Shopping">Shopping</option>
+                                    <option value="Bills">Bills</option>
+                                    <option value="Settlement">Settlement</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                
+                                <select id="dateFilter" class="filter-select">
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                </select>
+                                
+                                <select id="memberFilter" class="filter-select">
+                                    <option value="">All Members</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Transactions List -->
+                    <section class="content-section">
+                        <div class="section-header">
+                            <h2>
+                                <i class="fas fa-list"></i>
+                                Transactions
+                            </h2>
+                            <div class="sort-controls">
+                                <label for="sortBy">Sort by:</label>
+                                <select id="sortBy" class="sort-select">
+                                    <option value="date_desc">Newest First</option>
+                                    <option value="date_asc">Oldest First</option>
+                                    <option value="amount_desc">Amount (High to Low)</option>
+                                    <option value="amount_asc">Amount (Low to High)</option>
+                                    <option value="category">Category</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="transactionsList" class="transactions-container">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading transactions...</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div id="transactionModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Transaction Details</h3>
+                <button class="modal-close" onclick="closeTransactionModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="transactionModalBody">
+                <!-- Transaction details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/transactions.js"></script>
+</body>
+</html>

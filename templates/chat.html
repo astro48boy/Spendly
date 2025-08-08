@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spendly Chat - Add Expenses</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/static/dashboard_modern.css" rel="stylesheet">
+    <style>
+        /* Chat-specific styles */
+        .chat-layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: var(--space-8);
+            padding: var(--space-8) var(--space-6);
+            min-height: calc(100vh - 64px);
+        }
+
+        .chat-main {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 160px);
+        }
+
+        .chat-header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+
+        .chat-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .chat-subtitle {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: var(--space-4);
+            overflow-y: auto;
+            background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .system-message {
+            background: var(--blue-50);
+            border: 1px solid var(--blue-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin: var(--space-4) auto;
+            max-width: 600px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .system-message h3 {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--blue-700);
+            font-weight: 600;
+            margin-bottom: var(--space-3);
+        }
+
+        .system-message ul {
+            list-style: none;
+            padding: 0;
+            margin: var(--space-3) 0 0 0;
+        }
+
+        .system-message li {
+            background: white;
+            padding: var(--space-3);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-2);
+            color: var(--gray-700);
+            border-left: 3px solid var(--blue-400);
+        }
+
+        .message {
+            margin-bottom: var(--space-3);
+            display: flex;
+            max-width: 100%;
+            animation: messageSlide 0.3s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.own-message {
+            justify-content: flex-end;
+        }
+
+        .message.other-message {
+            justify-content: flex-start;
+        }
+
+        .message.system-message {
+            justify-content: center;
+            margin: var(--space-4) 0;
+            animation: systemMessageSlide 0.4s ease-out;
+        }
+
+        @keyframes systemMessageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .message.system-message .message-bubble {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            border-radius: 12px;
+            text-align: center;
+            max-width: 80%;
+            padding: var(--space-2) var(--space-4);
+            font-size: 0.8rem;
+            line-height: 1.3;
+            box-shadow: none;
+            position: relative;
+        }
+
+        .message.system-message .message-bubble::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: -1px;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 1px;
+            background: var(--gray-300);
+        }
+
+        .message.system-message .message-bubble::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -1px;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 1px;
+            background: var(--gray-300);
+        }
+
+        .message.system-message .message-text {
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .message.system-message .system-icon {
+            display: inline-block;
+            margin-right: var(--space-2);
+            font-size: 0.75rem;
+        }
+
+        .message.system-message .message-time {
+            font-size: 0.65rem;
+            color: var(--gray-400);
+            margin-top: var(--space-1);
+            display: block;
+        }
+
+        /* Special styling for expense success messages */
+        .message.system-message.success .message-bubble {
+            background: var(--green-50);
+            border-color: var(--green-200);
+            color: var(--green-700);
+        }
+
+        .message.system-message.error .message-bubble {
+            background: var(--red-50);
+            border-color: var(--red-200);
+            color: var(--red-700);
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            min-width: 120px;
+            padding: var(--space-3) var(--space-4);
+            border-radius: 18px;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            word-wrap: break-word;
+        }
+
+        .message.own-message .message-bubble {
+            background: var(--primary-500);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+
+        .message.other-message .message-bubble {
+            background: white;
+            color: var(--gray-900);
+            border: 1px solid var(--gray-200);
+            border-bottom-left-radius: 8px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-600);
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-right: var(--space-2);
+            flex-shrink: 0;
+        }
+
+        .message.own-message .message-avatar {
+            display: none;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-1);
+        }
+
+        .message.own-message .message-header {
+            justify-content: flex-end;
+        }
+
+        .message-author {
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .message.own-message .message-author {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .message.other-message .message-author {
+            color: var(--primary-600);
+        }
+
+        .message-time {
+            font-size: 0.625rem;
+            opacity: 0.7;
+        }
+
+        .message.own-message .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message.other-message .message-time {
+            color: var(--gray-500);
+        }
+
+        .message-text {
+            line-height: 1.4;
+            font-size: 0.875rem;
+        }
+
+        /* Consecutive message grouping */
+        .message + .message.same-author {
+            margin-top: -var(--space-2);
+        }
+
+        .message.same-author .message-header {
+            display: none;
+        }
+
+        .message.same-author .message-bubble {
+            border-radius: 18px;
+        }
+
+        .message.own-message.same-author .message-bubble {
+            border-bottom-right-radius: 18px;
+        }
+
+        .message.other-message.same-author .message-bubble {
+            border-bottom-left-radius: 18px;
+        }
+
+        /* Typing indicator */
+        .typing-indicator .message-bubble {
+            background: white;
+            border: 1px solid var(--gray-200);
+            padding: var(--space-3);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gray-400);
+            animation: typingDots 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typingDots {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .chat-layout {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+                padding: var(--space-4);
+            }
+
+            .sidebar {
+                order: 2;
+            }
+
+            .chat-main {
+                order: 1;
+                height: calc(100vh - 200px);
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 2px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        .chat-input-container {
+            padding: var(--space-4) var(--space-6);
+            border-top: 1px solid var(--gray-200);
+            background: white;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: var(--space-3);
+            align-items: flex-end;
+            max-width: 100%;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: var(--space-3) var(--space-4);
+            border: 2px solid var(--gray-200);
+            border-radius: 24px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            transition: all 0.2s ease;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            background: var(--gray-50);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary-400);
+            background: white;
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .chat-input:disabled {
+            background: var(--gray-100);
+            cursor: not-allowed;
+            color: var(--gray-400);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--primary-600);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-btn span {
+            display: none;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .group-selector-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+        }
+
+        .group-selector-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-4);
+        }
+
+        .group-selector-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .group-select {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            margin-bottom: var(--space-4);
+            transition: all 0.2s ease;
+        }
+
+        .group-select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .group-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+
+        .group-action-btn {
+            flex: 1;
+            padding: var(--space-3);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            background: white;
+            color: var(--gray-700);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            transition: all 0.2s ease;
+        }
+
+        .group-action-btn:hover:not(:disabled) {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .group-action-btn:disabled {
+            background: var(--gray-100);
+            color: var(--gray-400);
+            cursor: not-allowed;
+        }
+
+        .group-action-btn.primary {
+            background: var(--primary-600);
+            color: white;
+            border-color: var(--primary-600);
+        }
+
+        .group-action-btn.primary:hover:not(:disabled) {
+            background: var(--primary-700);
+            border-color: var(--primary-700);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .chat-layout {
+                grid-template-columns: 1fr;
+                gap: var(--space-4);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-wallet"></i>
+                <span>Spendly</span>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                </a>
+                <a href="/dashboard" class="nav-link">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/transactions" class="nav-link">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Transactions</span>
+                </a>
+            </div>
+            
+            <div class="nav-user" id="userInfo" style="display: none;">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-name" id="userName"></span>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="chat-layout">
+        <!-- Sidebar -->
+        <div class="sidebar-container">
+            <div class="group-selector-container">
+                <div class="group-selector-header">
+                    <i class="fas fa-users"></i>
+                    <h3>Active Group</h3>
+                </div>
+                
+                <select id="groupSelect" class="group-select">
+                    <option value="">Select a group...</option>
+                </select>
+                
+                <div class="group-actions">
+                    <button id="createGroupBtn" class="group-action-btn primary">
+                        <i class="fas fa-plus"></i>
+                        <span>Create</span>
+                    </button>
+                    <button id="addMemberBtn" class="group-action-btn" disabled>
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add Member</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Main -->
+        <div class="chat-main">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <i class="fas fa-robot"></i>
+                    AI Expense Assistant
+                </div>
+                <div class="chat-subtitle">
+                    Tell me about expenses in natural language and I'll add them to your group
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="system-message">
+                    <h3>
+                        <i class="fas fa-lightbulb"></i>
+                        How to use the expense chat
+                    </h3>
+                    <p>Simply describe your expenses in natural language. Here are some examples:</p>
+                    <ul>
+                        <li><i class="fas fa-pizza-slice"></i> "I paid $25 for pizza for everyone"</li>
+                        <li><i class="fas fa-coffee"></i> "John spent 15.50 on coffee for him and Mary"</li>
+                        <li><i class="fas fa-shopping-cart"></i> "Sarah bought groceries for $45, split it equally"</li>
+                        <li><i class="fas fa-gas-pump"></i> "Gas was $40, split between me and Tom"</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea id="messageInput" class="chat-input" placeholder="Describe your expense..." disabled rows="1"></textarea>
+                    <button id="sendBtn" class="send-btn" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Send</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div id="createGroupModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-users"></i> Create New Group</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <form id="createGroupForm" class="modal-form">
+                <div class="form-group">
+                    <label for="groupName">Group Name</label>
+                    <input type="text" id="groupName" name="name" placeholder="Enter group name" required>
+                </div>
+                <div class="form-group">
+                    <label for="groupDescription">Description</label>
+                    <textarea id="groupDescription" name="description" placeholder="Optional description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="memberEmails">Member Emails</label>
+                    <input type="text" id="memberEmails" name="member_emails" placeholder="email1@example.com, email2@example.com">
+                    <small>Separate multiple emails with commas</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('createGroupModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Create Group
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div id="addMemberModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Add Member</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <form id="addMemberForm" class="modal-form">
+                <div class="form-group">
+                    <label for="userEmail">User Email</label>
+                    <input type="email" id="userEmail" name="user_email" placeholder="user@example.com" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addMemberModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-user-plus"></i>
+                        Add Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-header h2 {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin: 0;
+            color: var(--gray-900);
+            font-weight: 600;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--gray-400);
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--gray-600);
+        }
+
+        .modal-form {
+            padding: var(--space-6);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-5);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--space-2);
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--space-3) var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: var(--space-1);
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: flex-end;
+            margin-top: var(--space-6);
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            padding: var(--space-3) var(--space-5);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all 0.2s ease;
+            border: 1px solid;
+        }
+
+        .btn-primary {
+            background: var(--primary-600);
+            color: white;
+            border-color: var(--primary-600);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-700);
+            border-color: var(--primary-700);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border-color: var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+    </style>
+
+    <script src="/static/chat.js"></script>
+</body>
+</html>

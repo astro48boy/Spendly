@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Spendly</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/static/dashboard_modern.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--blue-600) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-4);
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-10);
+            text-align: center;
+        }
+
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-6);
+            color: var(--primary-600);
+            font-size: 2rem;
+        }
+
+        .auth-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-2);
+        }
+
+        .auth-subtitle {
+            color: var(--gray-600);
+            margin-bottom: var(--space-8);
+            line-height: 1.6;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-5);
+            text-align: left;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        .form-input {
+            padding: var(--space-4);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .form-input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .submit-btn {
+            background: var(--primary-600);
+            color: white;
+            border: none;
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            margin-top: var(--space-2);
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-700);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .auth-links {
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+        }
+
+        .auth-links p {
+            color: var(--gray-600);
+            margin: 0;
+        }
+
+        .auth-links a {
+            color: var(--primary-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .auth-links a:hover {
+            color: var(--primary-700);
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background: var(--red-50);
+            border: 1px solid var(--red-200);
+            color: var(--red-700);
+            padding: var(--space-4);
+            border-radius: var(--radius-md);
+            margin-top: var(--space-4);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .password-strength {
+            margin-top: var(--space-2);
+            font-size: 0.875rem;
+        }
+
+        .strength-weak { color: var(--red-600); }
+        .strength-medium { color: var(--orange-600); }
+        .strength-strong { color: var(--green-600); }
+
+        .submit-btn.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: var(--space-8) var(--space-6);
+            }
+            
+            .auth-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            
+            <h1 class="auth-title">Join Spendly</h1>
+            <p class="auth-subtitle">Create your account to start tracking expenses with friends and family</p>
+            
+            <form id="signupForm" class="auth-form">
+                <div class="form-group">
+                    <label for="name" class="form-label">Full Name</label>
+                    <input type="text" id="name" class="form-input" placeholder="Enter your full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Create a strong password" required>
+                    <div id="passwordStrength" class="password-strength"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Create Account</span>
+                </button>
+            </form>
+            
+            <div class="auth-links">
+                <p>Already have an account? <a href="/login">Sign in here</a></p>
+            </div>
+            
+            <div id="error-message" class="error-message" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) strength++;
+            else feedback.push('At least 8 characters');
+            
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            else feedback.push('Upper and lowercase letters');
+            
+            if (/\d/.test(password)) strength++;
+            else feedback.push('Numbers');
+            
+            if (/[^a-zA-Z0-9]/.test(password)) strength++;
+            else feedback.push('Special characters');
+            
+            if (password.length === 0) {
+                strengthDiv.innerHTML = '';
+                return;
+            }
+            
+            if (strength < 2) {
+                strengthDiv.innerHTML = `<span class="strength-weak"><i class="fas fa-times"></i> Weak - Add: ${feedback.join(', ')}</span>`;
+            } else if (strength < 3) {
+                strengthDiv.innerHTML = `<span class="strength-medium"><i class="fas fa-minus"></i> Medium - Consider adding: ${feedback.join(', ')}</span>`;
+            } else {
+                strengthDiv.innerHTML = `<span class="strength-strong"><i class="fas fa-check"></i> Strong password</span>`;
+            }
+        }
+        
+        document.getElementById('password').addEventListener('input', (e) => {
+            checkPasswordStrength(e.target.value);
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorDiv = document.getElementById('error-message');
+            const submitBtn = e.target.querySelector('.submit-btn');
+            const submitText = submitBtn.querySelector('span');
+            const submitIcon = submitBtn.querySelector('i');
+            
+            // Hide previous errors
+            errorDiv.style.display = 'none';
+            
+            if (password !== confirmPassword) {
+                const errorSpan = errorDiv.querySelector('span');
+                errorSpan.textContent = 'Passwords do not match';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            submitIcon.className = 'loading-spinner';
+            submitText.textContent = 'Creating account...';
+            
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Show success state
+                    submitIcon.className = 'fas fa-check';
+                    submitText.textContent = 'Account created!';
+                    
+                    // Brief delay to show success state
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 500);
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Signup failed');
+                }
+            } catch (error) {
+                console.error('❌ Signup error:', error);
+                
+                // Show error
+                const errorSpan = errorDiv.querySelector('span');
+                errorSpan.textContent = error.message || 'Network error. Please try again.';
+                errorDiv.style.display = 'flex';
+                
+                // Reset button state
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                submitIcon.className = 'fas fa-user-plus';
+                submitText.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

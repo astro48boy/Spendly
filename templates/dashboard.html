@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Spendly</title>
+    <link rel="stylesheet" href="/static/dashboard_modern.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-wallet"></i>
+                <span>Spendly</span>
+            </div>
+            
+            <div class="nav-menu">
+                <a href="/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                </a>
+                <a href="/dashboard" class="nav-link active">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/transactions" class="nav-link">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Transactions</span>
+                </a>
+            </div>
+            
+            <div class="nav-user" id="userInfo" style="display: none;">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-name" id="userName"></span>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>
+                    <i class="fas fa-users"></i>
+                    Your Groups
+                </h2>
+                <button class="create-group-btn" onclick="window.location.href='/'">
+                    <i class="fas fa-plus"></i>
+                    New Group
+                </button>
+            </div>
+            
+            <div class="groups-container">
+                <div id="groupsList" class="groups-list">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Loading groups...</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Welcome State -->
+            <div id="welcomeState" class="welcome-state">
+                <div class="welcome-content">
+                    <div class="welcome-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h1 class="welcome-title">Welcome to Your Dashboard</h1>
+                    <p class="welcome-description">Select a group from the sidebar to view detailed expense breakdowns and recent transactions.</p>
+                    <div class="welcome-actions">
+                        <button class="action-btn primary" onclick="window.location.href='/'">
+                            <i class="fas fa-plus"></i>
+                            Create Your First Group
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group Details -->
+            <div id="groupDetails" class="group-details" style="display: none;">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="header-content">
+                        <div class="header-info">
+                            <h1 id="selectedGroupName" class="page-title">
+                                <i class="fas fa-users"></i>
+                                Group Dashboard
+                            </h1>
+                            <div class="group-meta">
+                                <span class="member-count" id="memberCount">
+                                    <i class="fas fa-users"></i>
+                                    <span id="memberCountText">0 members</span>
+                                </span>
+                                <span class="total-expenses" id="totalExpenses">
+                                    <i class="fas fa-receipt"></i>
+                                    $0.00 total
+                                </span>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="action-btn primary" onclick="window.location.href='/'">
+                                <i class="fas fa-plus"></i>
+                                Add Expense
+                            </button>
+                            <button class="action-btn secondary">
+                                <i class="fas fa-cog"></i>
+                                Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stats-grid">
+                        <div class="stat-card balance-positive" id="balanceCard">
+                            <div class="stat-icon">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Your Balance</h3>
+                                <div class="stat-value" id="userBalance">$0.00</div>
+                                <div class="stat-label" id="balanceLabel">You're all settled up!</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>You Paid</h3>
+                                <div class="stat-value" id="userPaid">$0.00</div>
+                                <div class="stat-label">Total amount paid</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>You Owe</h3>
+                                <div class="stat-value" id="userOwed">$0.00</div>
+                                <div class="stat-label">Your share of expenses</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Sections -->
+                <div class="content-sections">
+                    <!-- Members Section -->
+                    <section class="content-section">
+                        <div class="section-header">
+                            <h2>
+                                <i class="fas fa-users"></i>
+                                Group Members
+                            </h2>
+                            <button class="view-all-btn" onclick="window.dashboard.showSettleModal()">
+                                Settle Debts <i class="fas fa-handshake"></i>
+                            </button>
+                        </div>
+                        <div id="membersBreakdown" class="members-grid">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading members...</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Recent Transactions -->
+                    <section class="content-section">
+                        <div class="section-header">
+                            <h2>
+                                <i class="fas fa-history"></i>
+                                Recent Transactions
+                            </h2>
+                            <button class="view-all-btn" onclick="window.location.href='/transactions'">
+                                View All <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <div id="recentExpenses" class="transactions-list">
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading transactions...</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settle Debt Modal -->
+    <div id="settleModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settle Debts</h3>
+                <button class="modal-close" onclick="window.dashboard.closeSettleModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="settleModalBody">
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Loading settlement options...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/dashboard_modern.js"></script>
+</body>
+</html>
