@@ -128,7 +128,7 @@ class DashboardManager {
         // Load expenses count for each group in parallel
         const promises = this.groups.map(async (group) => {
             try {
-                const response = await fetch(`/api/groups/${group.id}/expenses`, {
+                const response = await fetch(`/api/expenses/?group_id=${group.id}&limit=1000`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -217,15 +217,20 @@ class DashboardManager {
         const userId = this.currentUser.id;
 
         group.expenses.forEach(expense => {
-            // How much user paid
-            const userPaid = expense.paid_by === userId ? expense.amount : 0;
-            
-            // How much user owes (equal split among group members)
-            const splitCount = group.members ? group.members.length : 1;
-            const userOwes = expense.amount / splitCount;
-            
-            // User's balance for this expense
-            userBalance += userPaid - userOwes;
+            const amount = Number(expense.amount || 0);
+            const paidByMe = expense.paid_by === userId ? amount : 0;
+            let mySplit = 0;
+            if (Array.isArray(expense.splits) && expense.splits.length > 0) {
+                mySplit = expense.splits.reduce((sum, split) => {
+                    const splitUserId = (split && (split.user_id ?? split.member_id ?? (split.user && split.user.id))) || null;
+                    const splitAmount = Number((split && split.amount) || 0);
+                    return splitUserId === userId ? sum + splitAmount : sum;
+                }, 0);
+            } else {
+                const splitCount = group.members ? group.members.length : 1;
+                mySplit = splitCount > 0 ? amount / splitCount : 0;
+            }
+            userBalance += paidByMe - mySplit;
         });
 
         return userBalance;
@@ -282,9 +287,9 @@ class DashboardManager {
             const group = await groupResponse.json();
             console.log('✅ Group data received:', group);
             
-            // Load group expenses
+            // Load group expenses (include splits)
             console.log('📡 Fetching group expenses...');
-            const expensesResponse = await fetch(`/api/groups/${groupId}/expenses`, {
+            const expensesResponse = await fetch(`/api/expenses/?group_id=${groupId}&limit=1000`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -431,18 +436,23 @@ class DashboardManager {
         let balance = 0;
 
         this.currentGroup.expenses.forEach(expense => {
-            // Calculate how much user paid
+            const amount = Number(expense.amount || 0);
             if (expense.paid_by === userId) {
-                totalPaid += expense.amount;
+                totalPaid += amount;
             }
-            
-            // Calculate user's share (equal split among group members)
-            const splitCount = this.currentGroup.members ? this.currentGroup.members.length : 1;
-            const userShare = expense.amount / splitCount;
+            let userShare = 0;
+            if (Array.isArray(expense.splits) && expense.splits.length > 0) {
+                userShare = expense.splits.reduce((sum, split) => {
+                    const splitUserId = (split && (split.user_id ?? split.member_id ?? (split.user && split.user.id))) || null;
+                    const splitAmount = Number((split && split.amount) || 0);
+                    return splitUserId === userId ? sum + splitAmount : sum;
+                }, 0);
+            } else {
+                const splitCount = this.currentGroup.members ? this.currentGroup.members.length : 1;
+                userShare = splitCount > 0 ? amount / splitCount : 0;
+            }
             yourShare += userShare;
-            
-            // Calculate balance for this expense
-            const userPaid = expense.paid_by === userId ? expense.amount : 0;
+            const userPaid = expense.paid_by === userId ? amount : 0;
             balance += userPaid - userShare;
         });
 
@@ -512,9 +522,19 @@ class DashboardManager {
                 totalPaid += expense.amount;
             }
             
-            // This member's share (equal split among group members)
-            const splitCount = this.currentGroup.members.length;
-            totalShare += expense.amount / splitCount;
+            // This member's share (use splits if available)
+            const amount = Number(expense.amount || 0);
+            if (Array.isArray(expense.splits) && expense.splits.length > 0) {
+                const memberShare = expense.splits.reduce((sum, split) => {
+                    const splitUserId = (split && (split.user_id ?? split.member_id ?? (split.user && split.user.id))) || null;
+                    const splitAmount = Number((split && split.amount) || 0);
+                    return splitUserId === member.id ? sum + splitAmount : sum;
+                }, 0);
+                totalShare += memberShare;
+            } else {
+                const splitCount = this.currentGroup.members.length || 1;
+                totalShare += amount / splitCount;
+            }
         });
 
         const balance = totalPaid - totalShare;
@@ -551,7 +571,7 @@ class DashboardManager {
                         <div class="transaction-description">${this.escapeHtml(expense.description)}</div>
                         <div class="transaction-meta">
                             <span>Paid by ${this.escapeHtml(paidByName)}</span>
-                            <span>Split among ${this.currentGroup.members.length} members</span>
+                            <span>Split among ${Array.isArray(expense.splits) && expense.splits.length > 0 ? expense.splits.length : (this.currentGroup.members?.length || 0)} members</span>
                         </div>
                     </div>
                     <div class="transaction-amount">
